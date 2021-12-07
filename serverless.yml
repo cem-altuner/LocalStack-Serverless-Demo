@@ -1,0 +1,87 @@
+service: serverless-rest-api-with-dynamodb
+
+frameworkVersion: ">=1.1.0 <=2.70.0"
+
+provider:
+  name: aws
+  runtime: python3.8
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+
+functions:
+  create:
+    handler: customers/createCustomer.createCustomer
+    events:
+      - http:
+          path: customers
+          method: post
+          cors: true
+
+  list:
+    handler: customers/listCustomers.listCustomers
+    events:
+      - http:
+          path: customers
+          method: get
+          cors: true
+
+  get:
+    handler: customers/getCustomer.getCustomer
+    events:
+      - http:
+          path: customers/{id}
+          method: get
+          cors: true
+
+
+  delete:
+    handler: customers/deleteCustomer.deleteCustomer
+    events:
+      - http:
+          path: customers/{id}
+          method: delete
+          cors: true
+          
+  update:
+    handler: customers/updateCustomer.updateCustomer
+    events:
+      - http:
+          path: customers/{id}
+          method: put
+          cors: true
+
+resources:
+  Resources:
+    CustomersDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+
+plugins:
+  - serverless-localstack
+
+custom:
+  localstack:
+    stages:
+      - local

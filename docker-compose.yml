@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  localstack:
+    container_name: "localstack-test"
+    image: localstack/localstack:latest
+    network_mode: bridge
+    privileged: true
+    ports:
+      - '4566:4566'
+    environment:
+      - SERVICES=${SERVICES- }
+      - DATA_DIR=/tmp/localstack
+      - LAMBDA_EXECUTOR=docker-reuse
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_EXECUTION_ENV=true
+    volumes:
+      - ".volume/tmp/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
